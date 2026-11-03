@@ -1,0 +1,19 @@
+directories:
+  output: release
+  buildResources: build
+appId: com.kinxauto.app
+productName: Kinx Auto
+files:
+  - filter:
+      - dist/**/*
+      - dist-electron/**/*
+win:
+  target: nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+publish:
+  provider: github
+  owner: kinx-auto
+  repo: H2Book
+electronVersion: 38.1.2

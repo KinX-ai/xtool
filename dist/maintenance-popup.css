@@ -1,0 +1,241 @@
+/* ============================================================================
+   MAINTENANCE POPUP STYLES - Synchronized with Kinx Auto Design
+   ============================================================================ */
+
+:root {
+  --primary-color: #9333ea;
+  --secondary-color: #7c3aed;
+  --accent-color: #a78bfa;
+  --success-color: #10b981;
+  --error-color: #ef4444;
+  --warning-color: #f59e0b;
+  --bg-dark: #0f172a;
+  --bg-darker: #0c0f1e;
+  --text-light: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border-color: #1e293b;
+}
+
+.maintenance-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+  }
+}
+
+.maintenance-popup {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(147, 51, 234, 0.2);
+  animation: slideUp 0.4s ease-out;
+  text-align: center;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.maintenance-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(147, 51, 234, 0.3);
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.maintenance-icon svg {
+  width: 40px;
+  height: 40px;
+  stroke: white;
+  stroke-width: 1.5;
+}
+
+.maintenance-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 12px;
+  letter-spacing: -0.5px;
+}
+
+.maintenance-message {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 28px;
+}
+
+.maintenance-timer {
+  display: inline-block;
+  padding: 12px 20px;
+  background: rgba(147, 51, 234, 0.1);
+  border: 1px solid rgba(147, 51, 234, 0.3);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--accent-color);
+  margin-bottom: 24px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.maintenance-timer strong {
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+.maintenance-buttons {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.maintenance-btn {
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.maintenance-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.maintenance-btn:active {
+  transform: translateY(0);
+}
+
+.maintenance-btn-timer {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(123, 58, 237, 0.1));
+  color: var(--accent-color);
+  border: 1px solid rgba(147, 51, 234, 0.4);
+  cursor: default;
+}
+
+.maintenance-btn-timer:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.maintenance-btn-exit {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  font-weight: 700;
+}
+
+.maintenance-btn-exit:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  box-shadow: 0 12px 24px rgba(239, 68, 68, 0.4);
+}
+
+.maintenance-btn-exit:active {
+  background: linear-gradient(135deg, #b91c1c, #991b1b);
+}
+
+.maintenance-btn-secondary {
+  background: rgba(147, 51, 234, 0.15);
+  color: var(--accent-color);
+  border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.maintenance-btn-secondary:hover {
+  background: rgba(147, 51, 234, 0.25);
+  border-color: rgba(147, 51, 234, 0.5);
+}
+
+/* Animation for icon */
+.maintenance-icon.loading {
+  animation: spin 3s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .maintenance-popup {
+    padding: 32px 20px;
+    border-radius: 16px;
+  }
+  
+  .maintenance-title {
+    font-size: 24px;
+  }
+  
+  .maintenance-icon {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .maintenance-btn {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Dark mode (default for this app) */
+@media (prefers-color-scheme: dark) {
+  .maintenance-popup-overlay {
+    background: rgba(0, 0, 0, 0.8);
+  }
+}

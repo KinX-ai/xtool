@@ -1,0 +1,168 @@
+{
+  "name": "kinx-auto",
+  "version": "4.9.2",
+  "main": "dist-electron/main.js",
+  "dependencies": {
+    "@electron/remote": "^2.1.3",
+    "@google/genai": "^1.13.0",
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.17.0",
+    "body-parser": "^2.2.2",
+    "dotenv": "^16.4.5",
+    "edge-tts-node": "^1.5.7",
+    "electron-updater": "^6.1.1",
+    "express": "^5.2.1",
+    "fluent-ffmpeg": "^2.1.3",
+    "gtts": "^0.2.1",
+    "http-proxy-agent": "^9.0.0",
+    "https-proxy-agent": "^7.0.6",
+    "i18next": "^25.6.0",
+    "lucide-react": "^0.546.0",
+    "node-fetch": "^2.7.0",
+    "proxy-chain": "^2.7.1",
+    "puppeteer": "^24.22.0",
+    "puppeteer-core": "^24.43.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-i18next": "^16.1.0",
+    "react-resizable-panels": "^3.0.6",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "socks-proxy-agent": "^10.0.0",
+    "sweetalert2": "^11.26.24",
+    "undici": "^6.29.0"
+  },
+  "description": "Kinx Auto ",
+  "devDependencies": {
+    "electron": "^38.1.2",
+    "electron-builder": "^26.0.12",
+    "javascript-obfuscator": "^5.9.1",
+    "vite": "^8.0.16"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "electron .",
+    "pack": "node scripts/build-protected.js --dir",
+    "dist": "node scripts/build-protected.js --win --publish never",
+    "dist:portable": "node scripts/build-protected.js --win portable --publish never",
+    "dist:nsis": "node scripts/build-protected.js --win nsis --publish never",
+    "dist:mac": "node scripts/build-protected.js --mac --publish never"
+  },
+  "build": {
+    "appId": "com.kinxauto.app",
+    "productName": "Kinx Auto",
+    "artifactName": "Kinx.Auto.Setup.${version}.${ext}",
+    "asar": true,
+    "afterPack": "scripts/after-pack.js",
+    "electronFuses": {
+      "runAsNode": false,
+      "enableCookieEncryption": false,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true,
+      "grantFileProtocolExtraPrivileges": true,
+      "resetAdHocDarwinSignature": true
+    },
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "!**/*.backup*",
+      "!**/*.bak*",
+      "!**/*.log",
+      "!dist/builder-effective-config.yaml",
+      "!dist/assets/*_muse.js"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "extraResources": [
+        {
+          "from": "resources/kinxts",
+          "to": "kinxts"
+        }
+      ],
+      "extraFiles": [
+        {
+          "from": "build/ffmpeg",
+          "to": ".",
+          "filter": [
+            "*.exe"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Kinx Auto"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "KinX-ai",
+      "repo": "H2Book"
+    },
+    "mac": {
+      "icon": "build/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "extraResources": [],
+      "identity": null,
+      "x64ArchFiles": "*",
+      "singleArchFiles": "*",
+      "extraFiles": [
+        {
+          "from": "build/ffmpeg",
+          "to": ".",
+          "filter": [
+            "*",
+            "!*.exe"
+          ]
+        }
+      ]
+    }
+  },
+  "keywords": [],
+  "author": "Kinx Auto",
+  "license": "ISC",
+  "type": "commonjs",
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "universal"
+        ]
+      },
+      {
+        "target": "zip",
+        "arch": [
+          "universal"
+        ]
+      }
+    ],
+    "identity": null
+  }
+}

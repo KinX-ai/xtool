@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông Báo Bảo Trì</title>
+    <link rel="stylesheet" href="maintenance-popup.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="maintenance-popup-overlay" id="maintenanceOverlay">
+        <div class="maintenance-popup">
+            <!-- Icon -->
+            <div class="maintenance-icon" id="maintenanceIcon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+                </svg>
+            </div>
+
+            <!-- Title -->
+            <h1 class="maintenance-title" id="maintenanceTitle">Thông Báo Bảo Trì</h1>
+
+            <!-- Message -->
+            <p class="maintenance-message" id="maintenanceMessage">
+                Hệ thống đang tiến hành bảo trì định kỳ. Quý khách vui lòng quay lại sau.
+            </p>
+
+            <!-- Estimated Time -->
+            <div class="maintenance-timer" id="maintenanceTimer">
+                Thời gian hoàn thành dự kiến: <strong id="estimatedTime">--</strong>
+            </div>
+
+            <!-- Buttons -->
+            <div class="maintenance-buttons">
+                <button class="maintenance-btn maintenance-btn-exit" id="exitBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 6l-14-6v20l14-6m0-2v4"/>
+                    </svg>
+                    Thoát Ứng Dụng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Hàm để cập nhật thời gian dự kiến
+        function updateEstimatedTime(timeString) {
+            const element = document.getElementById('estimatedTime');
+            if (element) {
+                element.textContent = timeString || '--';
+            }
+        }
+
+        // Xử lý khi nút thoát được click
+        document.getElementById('exitBtn').addEventListener('click', async () => {
+            console.log('Người dùng click nút thoát');
+            try {
+                // Gọi IPC handler từ main process
+                if (window.electronAPI && window.electronAPI.invoke) {
+                    await window.electronAPI.invoke('app:exit-application');
+                } else if (window.ipcRenderer) {
+                    // Fallback cho preload script
+                    window.ipcRenderer.invoke('app:exit-application');
+                }
+            } catch (error) {
+                console.error('Lỗi khi thoát ứng dụng:', error);
+            }
+        });
+
+        // Lắng nghe sự kiện cập nhật thời gian dự kiến từ main process
+        if (window.electronAPI) {
+            window.electronAPI.receive('estimated-time:update', (data) => {
+                console.log('Cập nhật thời gian dự kiến:', data);
+                updateEstimatedTime(data.timeFormatted);
+            });
+        }
+
+        // Cập nhật thông tin popup nếu được truyền vào
+        function updateMaintenancePopup(data) {
+            if (data.title) {
+                document.getElementById('maintenanceTitle').textContent = data.title;
+            }
+            if (data.message) {
+                document.getElementById('maintenanceMessage').textContent = data.message;
+            }
+            if (data.estimatedTime) {
+                updateEstimatedTime(data.estimatedTime);
+            }
+        }
+
+        // Lắng nghe sự kiện hiển thị popup từ main process
+        if (window.electronAPI) {
+            window.electronAPI.receive('app:show-maintenance-popup', (data) => {
+                console.log('Hiển thị popup bảo trì:', data);
+                updateMaintenancePopup(data);
+            });
+        }
+
+        // Log khi popup được tải
+        console.log('[Maintenance Popup] Loaded successfully');
+    </script>
+</body>
+</html>

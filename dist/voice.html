@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tạo Voice — Kinx Auto</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f0f12; --card: #18181b; --input: #111827;
+      --border: #27272a; --border-hover: #3f3f46;
+      --accent: #7c3aed; --accent-hover: #6d28d9;
+      --success: #10b981; --error: #ef4444; --warning: #f59e0b;
+      --text: #f3f4f6; --text-dim: #9ca3af; --text-mid: #d1d5db;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+
+    /* === SIDEBAR === */
+    .sidebar { width: 280px; min-height: 100vh; background: var(--card); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
+    .sidebar-header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+    .sidebar-header .icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), #a855f7); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .sidebar-header h2 { font-size: 16px; font-weight: 700; }
+    .sidebar-header span { font-size: 11px; color: var(--text-dim); }
+
+    .section-label { font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 8px; }
+
+    /* Voice selector */
+    .voice-list { flex: 1; overflow-y: auto; max-height: 320px; }
+    .voice-list::-webkit-scrollbar { width: 4px; }
+    .voice-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .voice-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; }
+    .voice-item:hover { background: rgba(124,58,237,0.08); border-color: var(--border); }
+    .voice-item.active { background: rgba(124,58,237,0.15); border-color: var(--accent); }
+    .voice-item .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .voice-item .avatar.female { background: rgba(236,72,153,0.15); color: #ec4899; }
+    .voice-item .avatar.male { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .voice-item .info { flex: 1; min-width: 0; }
+    .voice-item .name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .voice-item .lang { font-size: 11px; color: var(--text-dim); }
+
+    /* Preview button */
+    .preview-btn { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; transition: all 0.15s; }
+    .preview-btn:hover { background: var(--accent-hover); transform: scale(1.1); }
+    .preview-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* Output dir */
+    .output-dir { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+    .output-dir .label { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+    .output-dir .path { font-size: 12px; color: var(--text-mid); background: var(--input); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); word-break: break-all; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .output-dir .path .text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .btn-sm { padding: 4px 10px; font-size: 11px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text-dim); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .btn-sm:hover { background: rgba(255,255,255,0.05); color: var(--text); border-color: var(--border-hover); }
+
+    /* === MAIN CONTENT === */
+    .main { flex: 1; display: flex; flex-direction: column; padding: 24px 32px; overflow-y: auto; }
+
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .header h1 { font-size: 24px; font-weight: 800; }
+    .header h1 span { background: linear-gradient(135deg, var(--accent), #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; background: var(--card); border-radius: 10px; padding: 4px; border: 1px solid var(--border); width: fit-content; margin-bottom: 20px; }
+    .tab { padding: 8px 16px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.15s; color: var(--text-dim); border: none; background: none; }
+    .tab.active { background: var(--accent); color: white; }
+    .tab:not(.active):hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+    /* Input area */
+    .input-group { margin-bottom: 16px; }
+    .input-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-mid); margin-bottom: 6px; }
+    textarea { width: 100%; min-height: 180px; padding: 14px; background: var(--input); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; resize: vertical; transition: border-color 0.2s; }
+    textarea:focus { outline: none; border-color: var(--accent); }
+    textarea::placeholder { color: var(--text-dim); }
+
+    .input-row { display: flex; gap: 12px; margin-bottom: 16px; }
+    .input-row > * { flex: 1; }
+    select { width: 100%; padding: 10px 12px; background: var(--input); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer; appearance: none; }
+    select:focus { outline: none; border-color: var(--accent); }
+
+    /* Action buttons */
+    .actions { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+    .btn { padding: 10px 20px; font-size: 14px; font-weight: 700; border-radius: 10px; border: none; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 15px rgba(124,58,237,0.3); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-secondary { background: transparent; color: var(--text-mid); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.05); border-color: var(--border-hover); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger { background: var(--error); color: white; }
+    .btn-danger:hover { background: #dc2626; }
+
+    /* Batch settings */
+    .batch-row { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+    .batch-row label { font-size: 13px; color: var(--text-mid); white-space: nowrap; }
+    .batch-row input[type="number"] { width: 70px; padding: 6px 10px; background: var(--input); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; text-align: center; }
+    .batch-row input[type="number"]:focus { outline: none; border-color: var(--accent); }
+
+    /* File list (batch mode) */
+    .file-list { flex: 1; overflow-y: auto; max-height: 300px; }
+    .file-list::-webkit-scrollbar { width: 4px; }
+    .file-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .file-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--input); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; transition: border-color 0.15s; }
+    .file-item:hover { border-color: var(--border-hover); }
+    .file-item .file-name { flex: 1; font-size: 13px; font-weight: 500; }
+    .file-item .file-status { font-size: 12px; padding: 3px 8px; border-radius: 4px; font-weight: 600; }
+    .file-item .file-status.pending { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .file-item .file-status.processing { background: rgba(124,58,237,0.15); color: var(--accent); }
+    .file-item .file-status.done { background: rgba(16,185,129,0.15); color: var(--success); }
+    .file-item .file-status.error { background: rgba(239,68,68,0.15); color: var(--error); }
+
+    /* Progress bar */
+    .progress-container { margin-top: 16px; display: none; }
+    .progress-container.active { display: block; }
+    .progress-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
+    .progress-header .label { color: var(--text-mid); }
+    .progress-header .value { color: var(--accent); font-weight: 700; }
+    .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #a855f7); border-radius: 3px; transition: width 0.3s ease; }
+
+    /* Audio player */
+    .audio-player { margin-top: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: none; }
+    .audio-player.active { display: block; }
+    .audio-player header { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    audio { width: 100%; height: 36px; border-radius: 8px; }
+
+    /* Loading spinner */
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Filter chips */
+    .filter-chips { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+    .chip { padding: 4px 12px; font-size: 12px; font-weight: 600; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.15s; }
+    .chip.active { background: rgba(124,58,237,0.15); border-color: var(--accent); color: var(--accent); }
+    .chip:not(.active):hover { border-color: var(--border-hover); color: var(--text-mid); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state p { font-size: 13px; line-height: 1.5; }
+
+    /* Toast notification */
+    .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 9999; animation: slideIn 0.3s ease; transform-origin: bottom right; }
+    .toast.success { background: var(--success); color: white; }
+    .toast.error { background: var(--error); color: white; }
+    .toast.info { background: var(--accent); color: white; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="icon">🎙️</div>
+      <div>
+        <h2>Tạo Voice</h2>
+        <span>Edge TTS Engine</span>
+      </div>
+    </div>
+
+    <div class="section-label">Lọc giọng</div>
+    <div class="filter-chips" id="filterChips">
+      <button class="chip active" data-filter="all">Tất cả</button>
+      <button class="chip" data-filter="vi">🇻🇳 Việt</button>
+      <button class="chip" data-filter="en">🇬🇧 Anh</button>
+      <button class="chip" data-filter="ja">🇯🇵 Nhật</button>
+      <button class="chip" data-filter="zh">🇨🇳 Trung</button>
+      <button class="chip" data-filter="ko">🇰🇷 Hàn</button>
+      <button class="chip" data-filter="Female">♀ Nữ</button>
+      <button class="chip" data-filter="Male">♂ Nam</button>
+    </div>
+
+    <div class="section-label">Danh sách giọng (<span id="voiceCount">0</span>)</div>
+    <div class="voice-list" id="voiceList">
+      <div class="empty-state">
+        <div class="icon">⏳</div>
+        <p>Đang tải danh sách giọng...</p>
+      </div>
+    </div>
+
+    <div class="output-dir">
+      <div class="label">📁 Thư mục lưu</div>
+      <div class="path">
+        <span class="text" id="outputDirPath">Đang tải...</span>
+        <button class="btn-sm" id="btnChangeDir" title="Đổi thư mục">📁</button>
+        <button class="btn-sm" id="btnOpenDir" title="Mở thư mục">📂</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="header">
+      <h1>🎙️ Tạo <span>Voice</span></h1>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="single">Nhập text</button>
+      <button class="tab" data-tab="batch">Import file .txt</button>
+      <button class="tab" data-tab="conversation">💬 Hội thoại</button>
+    </div>
+
+    <!-- Single mode -->
+    <div id="tab-single">
+      <div class="input-group">
+        <label>Nội dung text</label>
+        <textarea id="textInput" placeholder="Nhập text cần chuyển thành giọng nói...&#10;&#10;Ví dụ: Xin chào, đây là bài kiểm tra giọng nói từ Kinx Auto."></textarea>
+      </div>
+
+      <div class="input-row">
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:6px;">Tốc độ</label>
+          <select id="rateSelect">
+            <option value="-50%">Rất chậm (-50%)</option>
+            <option value="-25%">Chậm (-25%)</option>
+            <option value="+0%" selected>Bình thường</option>
+            <option value="+25%">Nhanh (+25%)</option>
+            <option value="+50%">Rất nhanh (+50%)</option>
+            <option value="+100%">Cực nhanh (+100%)</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:6px;">Âm lượng</label>
+          <select id="volumeSelect">
+            <option value="-50%">Nhỏ (-50%)</option>
+            <option value="-25%">Vừa nhỏ (-25%)</option>
+            <option value="+0%" selected>Bình thường</option>
+            <option value="+25%">To (+25%)</option>
+            <option value="+50%">Rất to (+50%)</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:6px;">Cao độ</label>
+          <select id="pitchSelect">
+            <option value="-50Hz">Thấp (-50Hz)</option>
+            <option value="-25Hz">Hơi thấp (-25Hz)</option>
+            <option value="+0Hz" selected>Bình thường</option>
+            <option value="+25Hz">Hơi cao (+25Hz)</option>
+            <option value="+50Hz">Cao (+50Hz)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-secondary" id="btnPreview">▶ Nghe thử</button>
+        <button class="btn btn-primary" id="btnGenerate">🎙️ Tạo Audio</button>
+      </div>
+
+      <!-- Audio preview -->
+      <div class="audio-player" id="audioPlayer">
+        <header>🔊 Kết quả</header>
+        <audio id="audioElement" controls></audio>
+      </div>
+    </div>
+
+    <!-- Batch mode -->
+    <div id="tab-batch" style="display:none;">
+      <div class="input-group">
+        <label>Upload file .txt (mỗi dòng = 1 prompt)</label>
+        <div id="dropZone" style="border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;cursor:pointer;transition:all 0.2s;">
+          <div style="font-size:32px;margin-bottom:8px;">📄</div>
+          <p style="font-size:13px;color:var(--text-dim);">Kéo file .txt vào đây hoặc <span style="color:var(--accent);font-weight:600;">nhấn để chọn</span></p>
+          <input type="file" id="fileInput" accept=".txt" multiple style="display:none;" />
+        </div>
+      </div>
+
+      <div class="batch-row">
+        <label>Số luồng song song:</label>
+        <input type="number" id="maxThreads" value="3" min="1" max="10" />
+        <label style="margin-left:20px;">Giọng:</label>
+        <select id="batchVoiceSelect" style="flex:1;"></select>
+      </div>
+
+      <div class="actions" style="margin-bottom:16px;">
+        <button class="btn btn-secondary" id="btnClearFiles">🗑️ Xóa tất cả</button>
+        <button class="btn btn-primary" id="btnBatchGenerate">🚀 Bắt đầu tạo (<span id="batchCount">0</span> file)</button>
+        <button class="btn btn-danger" id="btnBatchCancel" style="display:none;">⏹ Dừng</button>
+      </div>
+
+      <!-- File list -->
+      <div class="file-list" id="fileList"></div>
+
+      <!-- Progress -->
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-header">
+          <span class="label" id="progressLabel">Đang xử lý...</span>
+          <span class="value" id="progressValue">0/0</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- Conversation mode -->
+    <div id="tab-conversation" style="display:none;">
+      <div class="input-group">
+        <label>Kịch bản hội thoại <span style="font-weight:400;color:var(--text-dim);">(mỗi dòng = 1 câu: <code style="background:var(--input);padding:2px 6px;border-radius:4px;font-size:12px;">Tên: lời thoại</code>)</span></label>
+        <textarea id="convScript" rows="12" placeholder="Minh: Xin chào bạn!
+Lan: Chào Minh, hôm nay thời tiết đẹp quá nhỉ?
+Minh: Đúng rồi, đi dạo công viên không?
+Lan: Hay quá, mình đi ngay đi!" style="min-height:200px;font-family:monospace;"></textarea>
+      </div>
+
+      <div class="input-row">
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:6px;">Giọng mặc định (tất cả nhân vật)</label>
+          <select id="convVoiceDefault">
+            <option value="">— Chọn giọng mặc định —</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:6px;">Temperature</label>
+          <input type="range" id="convTemp" min="0.1" max="1.5" step="0.1" value="0.7" style="width:100%;margin-top:8px;" />
+          <div style="font-size:12px;color:var(--text-dim);text-align:center;">0.7</div>
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:6px;">Pause giữa câu (ms)</label>
+          <input type="number" id="convPause" value="600" min="0" max="3000" step="100" style="width:100%;padding:10px;background:var(--input);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;" />
+        </div>
+      </div>
+
+      <!-- Voice map (auto-detect speakers from script) -->
+      <div id="voiceMapSection" style="display:none;margin-bottom:16px;">
+        <label style="display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:8px;">🗣️ Map giọng nhân vật</label>
+        <div id="voiceMapList" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-secondary" id="btnConvPreview">▶ Xem trước nhân vật</button>
+        <button class="btn btn-primary" id="btnConvGenerate">💬 Tạo Audio Hội thoại</button>
+      </div>
+
+      <div class="audio-player" id="audioConvPlayer">
+        <header>🔊 Kết quả hội thoại</header>
+        <audio id="audioConvElement" controls></audio>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // Voice UI Logic
+    // ============================================================
+    const api = window.electronAPI;
+    let allVoices = [];
+    let filteredVoices = [];
+    let selectedVoice = null;
+    let batchFiles = [];
+    let kinxtsVoices = [];  // kinxts saved voices (for conversation map)
+
+    // === INIT ===
+    async function init() {
+      // Load voices
+      try {
+        allVoices = await api.ttsGetVoices();
+        filteredVoices = [...allVoices];
+        renderVoices();
+        renderBatchVoiceSelect();
+      } catch (e) {
+        console.error("Failed to load voices:", e);
+        showToast("Lỗi tải danh sách giọng!", "error");
+      }
+
+      // Load output dir
+      try {
+        const dir = await api.ttsGetOutputDir();
+        document.getElementById("outputDirPath").textContent = dir;
+      } catch (e) {}
+
+      // Setup events
+      setupFilterChips();
+      setupTabs();
+      setupSingleMode();
+      setupBatchMode();
+      setupConversationMode();
+    }
+
+    // === VOICE LIST ===
+    function renderVoices() {
+      const list = document.getElementById("voiceList");
+      document.getElementById("voiceCount").textContent = filteredVoices.length;
+
+      if (filteredVoices.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="icon">🔇</div><p>Không tìm thấy giọng nào</p></div>';
+        return;
+      }
+
+      list.innerHTML = filteredVoices.map((v, i) => {
+        const isFemale = (v.gender || "").toLowerCase().includes("female");
+        const lang = v.language || v.locale?.split("-")[0] || "?";
+        const active = selectedVoice === v.voiceCode ? "active" : "";
+        return `
+          <div class="voice-item ${active}" data-code="${v.voiceCode}" onclick="selectVoice('${v.voiceCode}')">
+            <div class="avatar ${isFemale ? 'female' : 'male'}">${isFemale ? '♀' : '♂'}</div>
+            <div class="info">
+              <div class="name">${v.name || v.voiceCode}</div>
+              <div class="lang">${lang} • ${v.gender || '?'}</div>
+            </div>
+            <button class="preview-btn" onclick="event.stopPropagation(); previewVoice('${v.voiceCode}')" title="Nghe thử">▶</button>
+          </div>`;
+      }).join("");
+
+      // Auto-select first
+      if (!selectedVoice && filteredVoices.length > 0) {
+        selectVoice(filteredVoices[0].voiceCode);
+      }
+    }
+
+    function selectVoice(code) {
+      selectedVoice = code;
+      document.querySelectorAll(".voice-item").forEach(el => {
+        el.classList.toggle("active", el.dataset.code === code);
+      });
+    }
+
+    async function previewVoice(code) {
+      const btn = event.target.closest('.preview-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div>';
+      try {
+        const result = await api.ttsPreview({ text: "Xin chào, đây là giọng nói mẫu từ Kinx Auto.", voiceCode: code });
+        if (result && result.success && result.filePath) {
+          const audio = new Audio(`file:///${result.filePath.replace(/\\/g, '/')}`);
+          audio.play();
+        } else {
+          showToast("Preview không thành công", "error");
+        }
+      } catch (e) {
+        showToast("Lỗi preview: " + e.message, "error");
+      }
+      btn.disabled = false;
+      btn.innerHTML = '▶';
+    }
+
+    // === FILTER CHIPS ===
+    function setupFilterChips() {
+      document.querySelectorAll(".chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+          document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+          chip.classList.add("active");
+          const filter = chip.dataset.filter;
+          if (filter === "all") {
+            filteredVoices = [...allVoices];
+          } else if (filter === "Female" || filter === "Male") {
+            filteredVoices = allVoices.filter(v => (v.gender || "").toLowerCase().includes(filter.toLowerCase()));
+          } else {
+            filteredVoices = allVoices.filter(v => (v.language || v.locale || "").startsWith(filter));
+          }
+          renderVoices();
+        });
+      });
+    }
+
+    // === TABS ===
+    function setupTabs() {
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          document.getElementById("tab-single").style.display = tab.dataset.tab === "single" ? "" : "none";
+          document.getElementById("tab-batch").style.display = tab.dataset.tab === "batch" ? "" : "none";
+          document.getElementById("tab-conversation").style.display = tab.dataset.tab === "conversation" ? "" : "none";
+        });
+      });
+    }
+
+    // === SINGLE MODE ===
+    function setupSingleMode() {
+      document.getElementById("btnPreview").addEventListener("click", async () => {
+        const text = document.getElementById("textInput").value.trim();
+        if (!text) { showToast("Nhập text trước!", "error"); return; }
+        if (!selectedVoice) { showToast("Chọn giọng trước!", "error"); return; }
+
+        const btn = document.getElementById("btnPreview");
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Đang tạo...';
+        try {
+          const result = await api.ttsPreview({ text: text.substring(0, 500), voiceCode: selectedVoice });
+          if (result && result.success && result.filePath) {
+            const player = document.getElementById("audioPlayer");
+            const audioEl = document.getElementById("audioElement");
+            audioEl.src = `file:///${result.filePath.replace(/\\/g, '/')}`;
+            player.classList.add("active");
+            audioEl.play();
+          } else {
+            showToast("Preview thất bại", "error");
+          }
+        } catch (e) {
+          showToast("Lỗi: " + e.message, "error");
+        }
+        btn.disabled = false;
+        btn.innerHTML = '▶ Nghe thử';
+      });
+
+      document.getElementById("btnGenerate").addEventListener("click", async () => {
+        const text = document.getElementById("textInput").value.trim();
+        if (!text) { showToast("Nhập text trước!", "error"); return; }
+        if (!selectedVoice) { showToast("Chọn giọng trước!", "error"); return; }
+
+        const btn = document.getElementById("btnGenerate");
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Đang tạo...';
+        try {
+          const result = await api.ttsGenerate({
+            text,
+            voiceCode: selectedVoice,
+            options: {
+              rate: document.getElementById("rateSelect").value,
+              volume: document.getElementById("volumeSelect").value,
+              pitch: document.getElementById("pitchSelect").value,
+            }
+          });
+          if (result && result.success) {
+            showToast(`✅ Đã lưu: ${result.fileName} (${(result.fileSize / 1024).toFixed(1)} KB)`, "success");
+            // Auto play
+            const player = document.getElementById("audioPlayer");
+            const audioEl = document.getElementById("audioElement");
+            audioEl.src = `file:///${result.filePath.replace(/\\/g, '/')}`;
+            player.classList.add("active");
+            audioEl.play();
+          }
+        } catch (e) {
+          showToast("Lỗi: " + e.message, "error");
+        }
+        btn.disabled = false;
+        btn.innerHTML = '🎙️ Tạo Audio';
+      });
+    }
+
+    // === BATCH MODE ===
+    function setupBatchMode() {
+      const dropZone = document.getElementById("dropZone");
+      const fileInput = document.getElementById("fileInput");
+
+      dropZone.addEventListener("click", () => fileInput.click());
+      dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.style.borderColor = "var(--accent)"; });
+      dropZone.addEventListener("dragleave", () => { dropZone.style.borderColor = "var(--border)"; });
+      dropZone.addEventListener("drop", (e) => { e.preventDefault(); dropZone.style.borderColor = "var(--border)"; handleFiles(e.dataTransfer.files); });
+      fileInput.addEventListener("change", (e) => handleFiles(e.target.files));
+
+      document.getElementById("btnClearFiles").addEventListener("click", () => {
+        batchFiles = [];
+        renderFileList();
+      });
+
+      document.getElementById("btnBatchGenerate").addEventListener("click", startBatchGenerate);
+
+      // Batch progress listener
+      api.onTtsBatchProgress((progress) => {
+        const { completed, total } = progress;
+        const pct = total > 0 ? (completed / total * 100) : 0;
+        document.getElementById("progressFill").style.width = pct + "%";
+        document.getElementById("progressValue").textContent = `${completed}/${total}`;
+        document.getElementById("progressLabel").textContent = completed >= total ? "✅ Hoàn thành!" : `Đang xử lý ${completed + 1}/${total}...`;
+
+        // Update file list
+        if (batchFiles[completed - 1]) {
+          batchFiles[completed - 1].status = "done";
+          renderFileList();
+        }
+      });
+    }
+
+    function handleFiles(files) {
+      for (const file of files) {
+        if (file.name.endsWith(".txt")) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const lines = e.target.result.split("\n").filter(l => l.trim());
+            lines.forEach((line, i) => {
+              batchFiles.push({
+                id: `${file.name}_${i}`,
+                name: `${file.name} #${i + 1}`,
+                text: line.trim(),
+                status: "pending"
+              });
+            });
+            renderFileList();
+          };
+          reader.readAsText(file);
+        }
+      }
+    }
+
+    function renderFileList() {
+      const list = document.getElementById("fileList");
+      document.getElementById("batchCount").textContent = batchFiles.length;
+      if (batchFiles.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="icon">📄</div><p>Chưa có file nào. Kéo file .txt vào để bắt đầu.</p></div>';
+        return;
+      }
+      list.innerHTML = batchFiles.slice(0, 100).map(f => `
+        <div class="file-item">
+          <div class="file-name">📝 ${f.name}</div>
+          <div class="file-status ${f.status}">${
+            f.status === "pending" ? "Chờ" :
+            f.status === "processing" ? "Đang tạo..." :
+            f.status === "done" ? "✅ Xong" : "❌ Lỗi"
+          }</div>
+        </div>
+      `).join("") + (batchFiles.length > 100 ? `<div style="text-align:center;padding:10px;color:var(--text-dim);font-size:12px;">... và ${batchFiles.length - 100} file khác</div>` : "");
+    }
+
+    function renderBatchVoiceSelect() {
+      const sel = document.getElementById("batchVoiceSelect");
+      sel.innerHTML = allVoices.map(v =>
+        `<option value="${v.voiceCode}">${v.name || v.voiceCode} (${v.language || '?'})</option>`
+      ).join("");
+    }
+
+    async function startBatchGenerate() {
+      if (batchFiles.length === 0) { showToast("Chưa có file nào!", "error"); return; }
+      const voiceCode = document.getElementById("batchVoiceSelect").value;
+      if (!voiceCode) { showToast("Chọn giọng!", "error"); return; }
+
+      const items = batchFiles.filter(f => f.status === "pending").map(f => ({
+        id: f.id, text: f.text, voiceCode
+      }));
+
+      if (items.length === 0) { showToast("Không có file nào cần xử lý", "info"); return; }
+
+      const maxThreads = parseInt(document.getElementById("maxThreads").value) || 3;
+      const progressEl = document.getElementById("progressContainer");
+      const btnGen = document.getElementById("btnBatchGenerate");
+      const btnCancel = document.getElementById("btnBatchCancel");
+
+      progressEl.classList.add("active");
+      btnGen.style.display = "none";
+      btnCancel.style.display = "";
+      document.getElementById("progressFill").style.width = "0%";
+      document.getElementById("progressValue").textContent = `0/${items.length}`;
+
+      // Mark all as processing
+      batchFiles.forEach(f => f.status = "processing");
+      renderFileList();
+
+      try {
+        const results = await api.ttsGenerateBatch({ items, maxThreads });
+        showToast(`✅ Hoàn thành ${results.length} file!`, "success");
+      } catch (e) {
+        showToast("Lỗi batch: " + e.message, "error");
+      }
+
+      btnGen.style.display = "";
+      btnCancel.style.display = "none";
+    }
+
+    // === OUTPUT DIR ===
+    document.getElementById("btnChangeDir").addEventListener("click", async () => {
+      const dir = await api.ttsSetOutputDir();
+      if (dir) {
+        document.getElementById("outputDirPath").textContent = dir;
+        showToast("Đã đổi thư mục!", "success");
+      }
+    });
+
+    document.getElementById("btnOpenDir").addEventListener("click", () => {
+      api.ttsOpenOutputDir();
+    });
+
+    // === TOAST ===
+    function showToast(msg, type = "info") {
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = "0"; toast.style.transform = "translateY(10px)"; setTimeout(() => toast.remove(), 300); }, 3000);
+    }
+
+    // === CONVERSATION MODE ===
+    function setupConversationMode() {
+      // Load kinxts voices for voice map
+      loadKinxtsVoices();
+
+      // Temperature display
+      const tempSlider = document.getElementById("convTemp");
+      tempSlider.addEventListener("input", () => {
+        tempSlider.nextElementSibling.textContent = tempSlider.value;
+      });
+
+      // Live voice map update on script change
+      let scriptTimer;
+      document.getElementById("convScript").addEventListener("input", () => {
+        clearTimeout(scriptTimer);
+        scriptTimer = setTimeout(() => updateVoiceMap(), 300);
+      });
+
+      // Generate button
+      document.getElementById("btnConvGenerate").addEventListener("click", startConversation);
+
+      // Preview button (play sample)
+      document.getElementById("btnConvPreview").addEventListener("click", () => {
+        const script = document.getElementById("convScript").value.trim();
+        if (!script) { showToast("Nhập kịch bản trước!", "error"); return; }
+        const lines = script.split("\n").filter(l => l.trim());
+        if (lines.length === 0) { showToast("Kịch bản trống!", "error"); return; }
+        // Show detected speakers
+        const speakers = parseSpeakers(script);
+        const names = [...new Set(speakers.map(s => s.speaker))];
+        showToast(`Phát hiện ${names.length} nhân vật: ${names.join(", ")}`, "info");
+      });
+    }
+
+    async function loadKinxtsVoices() {
+      try {
+        kinxtsVoices = await api.kinxtsListVoices();
+      } catch (e) { kinxtsVoices = []; }
+      const sel = document.getElementById("convVoiceDefault");
+      sel.innerHTML = '<option value="">— Chọn giọng mặc định —</option>' +
+        kinxtsVoices.map(v => `<option value="${v.id}">${v.name}</option>`).join("");
+    }
+
+    function parseSpeakers(script) {
+      // Parse "Tên: lời thoại" format
+      return script.split("\n").filter(l => l.trim()).map(line => {
+        const match = line.match(/^([^:：]+)[：:](.+)$/);
+        if (match) return { speaker: match[1].trim(), text: match[2].trim() };
+        return { speaker: null, text: line.trim() };
+      }).filter(s => s.text);
+    }
+
+    function updateVoiceMap() {
+      const script = document.getElementById("convScript").value.trim();
+      const lines = parseSpeakers(script);
+      const names = [...new Set(lines.map(s => s.speaker).filter(Boolean))];
+
+      const section = document.getElementById("voiceMapSection");
+      const list = document.getElementById("voiceMapList");
+
+      if (names.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "";
+      list.innerHTML = names.map(name => {
+        const options = kinxtsVoices.map(v =>
+          `<option value="${v.id}" title="${v.name}">${v.name}</option>`
+        ).join("");
+        return `<div style="display:flex;align-items:center;gap:10px;">
+          <span style="min-width:80px;font-size:13px;font-weight:600;color:var(--accent);">${name}</span>
+          <select data-speaker="${name}" class="conv-voice-select" style="flex:1;padding:8px 10px;background:var(--input);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
+            <option value="">🔵 Dùng giọng mặc định</option>
+            ${options}
+          </select>
+        </div>`;
+      }).join("");
+    }
+
+    async function startConversation() {
+      const btn = document.getElementById("btnConvGenerate");
+      const script = document.getElementById("convScript").value.trim();
+      if (!script) { showToast("Nhập kịch bản hội thoại!", "error"); return; }
+
+      const defaultVoice = document.getElementById("convVoiceDefault").value;
+      if (!defaultVoice) { showToast("Chọn giọng mặc định!", "error"); return; }
+
+      // Build speakers map from UI
+      const speakersMap = {};
+      document.querySelectorAll(".conv-voice-select").forEach(sel => {
+        const speaker = sel.dataset.speaker;
+        const voiceId = sel.value;
+        if (voiceId && speaker) speakersMap[speaker] = voiceId;
+      });
+      // Fill in default for speakers without explicit voice
+      const lines = parseSpeakers(script);
+      const names = [...new Set(lines.map(s => s.speaker).filter(Boolean))];
+      names.forEach(name => { if (!speakersMap[name]) speakersMap[name] = defaultVoice; });
+
+      const temperature = parseFloat(document.getElementById("convTemp").value) || 0.7;
+      const silenceDuration = parseInt(document.getElementById("convPause").value) || 600;
+
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div> Đang tạo hội thoại...';
+
+      try {
+        const result = await api.kinxtsConversation({
+          script,
+          speakers: speakersMap,
+          temperature,
+          silenceDuration
+        });
+
+        if (result && result.success && result.filePath) {
+          const player = document.getElementById("audioConvPlayer");
+          const audioEl = document.getElementById("audioConvElement");
+          audioEl.src = `file:///${result.filePath.replace(/\\/g, "/")}`;
+          player.classList.add("active");
+          audioEl.play();
+          showToast(`✅ Hội thoại đã lưu: ${result.fileName} (${(result.fileSize / 1024 / 1024).toFixed(1)} MB)`, "success");
+        } else {
+          showToast("Tạo hội thoại thất bại", "error");
+        }
+      } catch (e) {
+        showToast("Lỗi hội thoại: " + e.message, "error");
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '💬 Tạo Audio Hội thoại';
+    }
+
+    // === START ===
+    init();
+  </script>
+</body>
+</html>
